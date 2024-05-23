@@ -2,7 +2,6 @@ import { Response } from "express";
 import winston from "winston";
 import Env from "../config/environment_variables";
 import { ENVIRONMENTS } from "../config/app_config";
-require("winston-mongodb");
 
   /**
    * A Utility class that provides methods used for logging

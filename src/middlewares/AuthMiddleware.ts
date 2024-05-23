@@ -9,6 +9,7 @@ import { BIT } from "../data/enums/enum";
 import { loginSessionRepository } from "../services/login_session_service";
 import { AuthTokenPayload } from "../data/interfaces/interfaces";
 import { userRepository } from "../services/user_service";
+import LoginSession from "../entity/LoginSession";
 
 export class AuthMiddleware extends BaseRouterMiddleware {
 
@@ -45,7 +46,7 @@ export class AuthMiddleware extends BaseRouterMiddleware {
                         
                         this.requestUtils.addDataToState(USER_LABEL, user);
                         this.requestUtils.addDataToState(LOGIN_SESSION_LABEL, loginSession);
-                        
+
                         next();
                     } else {
                         const error =  new Error("Unable to validate user from token");
@@ -59,12 +60,12 @@ export class AuthMiddleware extends BaseRouterMiddleware {
         })
     }
 
-    private async validateLoginSession(loginSession: any, req: Request, res: Response): Promise<void> {
+    private async validateLoginSession(loginSession: LoginSession, req: Request, res: Response): Promise<void> {
         try {
             if (loginSession.validity_end_date <= new Date()) {
-                loginSession.expired = true;
+                loginSession.is_expired = true;
                 loginSession.status = BIT.OFF;
-                await loginSession.save();
+                await loginSessionRepository.save(loginSession);
                 const error = new Error("Session expired");
                 return this.sendErrorResponse(res, error, errorResponse.SESSION_EXPIRED, 401);
             }

@@ -15,16 +15,16 @@ class User {
     last_name: string;
 
     @Column({type: "varchar", nullable: true})
-    middle_name: string;
+    middle_name?: string;
 
     @Column({type: "varchar", unique: true})
     email: string;
 
-    @OneToOne(() => SocketConnection, (socketConnection) => socketConnection.user)
+    @OneToOne(() => SocketConnection, (socketConnection) => socketConnection.user, {cascade: true})
     @JoinColumn()
     socket_connection: SocketConnection;
 
-    @OneToOne(() => UserPassword, (userPassword) => userPassword.user)
+    @OneToOne(() => UserPassword, (userPassword) => userPassword.user, {cascade: true})
     @JoinColumn()
     password: UserPassword;
 

@@ -34,7 +34,6 @@ class AuthController extends BaseApiController {
                     middle_name: body.middle_name,
                     email: body.email
                 }
-
                 const { user, token } = await createNewUser(userData, body.password);
                 const response = {
                     message: SIGNUP_SUCCESS,
@@ -59,7 +58,6 @@ class AuthController extends BaseApiController {
 
         this.router.post(path, async (req, res) => {
             try {
-
                 const user = this.requestUtils.getRequestUser();
                 const token = await loginUser(user.id);
                 const response = {

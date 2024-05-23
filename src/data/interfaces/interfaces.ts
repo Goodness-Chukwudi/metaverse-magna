@@ -22,14 +22,14 @@ interface AuthTokenPayload {
 }
 
 interface IUser {
-    id: number;
+    id?: number;
     first_name: string;
     last_name: string;
     middle_name?: string;
     email: string;
     socket_connection?: ISocketConnection;
     password?: IUserPassword;
-    status: string;
+    status?: string;
 }
 
 interface ISocketConnection {

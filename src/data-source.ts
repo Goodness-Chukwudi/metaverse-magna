@@ -1,13 +1,18 @@
 import { DataSource } from "typeorm";
 
-export const AppDataSource = new DataSource({
+const AppDataSource = new DataSource({
     type: "postgres",
     host: "localhost",
     port: 5432,
-    username: "test",
-    password: "test",
-    database: "test",
-    entities: ["entity/*.js"],
+    username: "enyata-user",
+    password: "password",
+    database: "metaverse-magna",
+    entities: ["src/entity/**/*.ts"],
+    // entities: ["dist/entity/**/*.js"],
     synchronize: true,
     logging: false
-})
+});
+
+AppDataSource.initialize();
+
+export { AppDataSource }

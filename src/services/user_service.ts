@@ -4,38 +4,39 @@ import { createAuthToken } from '../common/utils/auth_utils';
 import { AppDataSource } from '../data-source';
 import User from '../entity/User';
 import { ILoginSession, IUser } from '../data/interfaces/interfaces';
-import UserPassword from '../entity/UserPassword';
 import LoginSession from '../entity/LoginSession';
+import UserPassword from '../entity/UserPassword';
 
 const userRepository = AppDataSource.getRepository(User)
 
-const createNewUser = async (userData: Partial<IUser>, passwordHash:string): Promise<{user: User, token: string}> => {
+const createNewUser = async (userData: IUser, passwordHash: string): Promise<{user: User, token: string}> => {
  return new Promise(async (resolve, reject) => {
     try {
-        let token = "";
-        let loginSession, user;
+
+        let user, loginSession, token;
         await AppDataSource.transaction(async (transactionalEntityManager) => {
+
             user = transactionalEntityManager.create(User, {
                 first_name: userData.first_name,
                 last_name: userData.last_name,
                 middle_name: userData.middle_name,
                 email: userData.email
-            })
+            });
+
             const password = transactionalEntityManager.create(UserPassword, {
                 password: passwordHash,
-                email: user.email
+                email: user.email,
+                user: user
             })
 
             user.password = password;
-            password.user = user;
-            
-            await transactionalEntityManager.save(user);
-            await transactionalEntityManager.save(password);
+            user = await transactionalEntityManager.save(user);
 
             loginSession = await transactionalEntityManager.create(LoginSession, {
                 user_id: user.id,
                 status: BIT.ON
             });
+            loginSession = await transactionalEntityManager.save(loginSession);
 
             token = createAuthToken(user.id, loginSession.id);
         });

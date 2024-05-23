@@ -48,7 +48,6 @@ class AppValidator extends BaseRouterMiddleware {
                 const error = new Error("A user with this email already exist");
                 return this.sendErrorResponse(res, error, DUPLICATE_EMAIL, 400)
             }
-
             next();
         } catch (error: any) {
             return this.sendErrorResponse(res, error, badRequestError(error.message), 400);

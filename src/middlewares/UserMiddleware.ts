@@ -1,8 +1,7 @@
 import BaseRouterMiddleware from "./BaseRouterMiddleware";
 import { USER_LABEL, USER_PASSWORD_LABEL } from '../common/constant/app_constants';
 import { NextFunction, Request, Response, Router } from 'express';
-import { logoutUser } from "../services/user_service";
-import { passwordRepository } from "../services/password_service";
+import { logoutUser, userRepository } from "../services/user_service";
 import * as errorMessage from "../common/constant/error_response_message";
 import { PASSWORD_STATUS } from "../data/enums/enum";
 import { hashData, validateHashedData } from "../common/utils/auth_utils";
@@ -25,17 +24,27 @@ class UserMiddleware extends BaseRouterMiddleware {
                 return this.sendErrorResponse(res, error, errorMessage.requiredField("Email"), 400);
             }
     
-            const password = await passwordRepository
+            // const password = await passwordRepository
+            //     .findOneBy({
+            //         email: email,
+            //         status: PASSWORD_STATUS.ACTIVE
+            //     })
+    
+            // if (!password) {
+            //     return this.sendErrorResponse(res, new Error("User not found"), errorMessage.INVALID_LOGIN, 400)
+            // }
+    
+            const user = await userRepository
                 .findOneBy({
                     email: email,
                     status: PASSWORD_STATUS.ACTIVE
                 })
     
-            if (!password) {
+            if (!user) {
                 return this.sendErrorResponse(res, new Error("User not found"), errorMessage.INVALID_LOGIN, 400)
             }
-            this.requestUtils.addDataToState(USER_LABEL, password.user);
-            this.requestUtils.addDataToState(USER_PASSWORD_LABEL, password);
+            this.requestUtils.addDataToState(USER_LABEL, user);
+            this.requestUtils.addDataToState(USER_PASSWORD_LABEL, user.password);
             next();
         } catch (error) {
             throw error;
@@ -75,19 +84,19 @@ class UserMiddleware extends BaseRouterMiddleware {
     */
     public validatePassword = async (req: Request, res: Response, next: any) => {
         try {
-            const password = this.requestUtils.getDataFromState(USER_PASSWORD_LABEL);
-            if (!password) {
-                const user = this.requestUtils.getRequestUser();
-                const password = await passwordRepository
-                    .findOneBy({
-                        email: user.email,
-                        status: PASSWORD_STATUS.ACTIVE
-                    })
+            const user = this.requestUtils.getRequestUser();
+            // if (!password) {
+            //     const user = this.requestUtils.getRequestUser();
+            //     const password = await passwordRepository
+            //         .findOneBy({
+            //             email: user.email,
+            //             status: PASSWORD_STATUS.ACTIVE
+            //         })
                 
-                this.requestUtils.addDataToState(USER_PASSWORD_LABEL, password);
-            }
+            //     this.requestUtils.addDataToState(USER_PASSWORD_LABEL, password);
+            // }
 
-            const isCorrectPassword = await validateHashedData(req.body.password, password.password);
+            const isCorrectPassword = await validateHashedData(req.body.password, user.password.password);
             if (!isCorrectPassword) return this.sendErrorResponse(res, new Error("Wrong password"), errorMessage.INVALID_LOGIN, 400);
 
             next();
