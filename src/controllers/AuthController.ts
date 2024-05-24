@@ -59,11 +59,12 @@ class AuthController extends BaseApiController {
         this.router.post(path, async (req, res) => {
             try {
                 const user = this.requestUtils.getRequestUser();
+                
                 const token = await loginUser(user.id);
                 const response = {
                     message: LOGIN_SUCCESSFUL,
                     token: token,
-                    user: user
+                    user: {...user, password: undefined}
                 }
 
                 return this.sendSuccessResponse(res, response);

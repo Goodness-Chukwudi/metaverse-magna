@@ -7,7 +7,6 @@ import Jwt from "jsonwebtoken";
 import { AuthTokenPayload } from "../../data/interfaces/interfaces";
 import { BIT } from "../../data/enums/enum";
 import { loginSessionRepository } from "../../services/login_session_service";
-import LoginSession from "../../entity/LoginSession";
 
 /**
  * Generates an authentication token. Signs the provided data into the token
@@ -105,14 +104,14 @@ const getTokenFromRequest = (req: Request): string => {
     return jwt;
 }
 
-const authenticateSocketConnection = (token:string): Promise<LoginSession> => {
+const isAuthenticated = (token:string): Promise<boolean> => {
     
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         verifyJwtToken(token, async (error, decoded) => {
             try {
                 if (error) {
                     console.log(error.message);
-                    reject(new Error("Socket Authentication failed"));
+                    resolve(false);
                 } else {
                     const data:AuthTokenPayload = decoded.data;
 
@@ -128,18 +127,17 @@ const authenticateSocketConnection = (token:string): Promise<LoginSession> => {
                             loginSession.is_expired = true;
                             loginSession.status = BIT.OFF;
                             await loginSessionRepository.save(loginSession);
-                            console.log("Session expired");
-                            reject(new Error("Socket Authentication failed"));
+                            resolve(false);
                         }
                         
-                        resolve(loginSession);
                     } else {
-                        reject(new Error("Socket Authentication failed"));
+                        resolve(false);
                     }
+                    resolve(true);
                 }
             } catch (error:any) {
                 console.log(error.message);
-                reject(new Error("Socket Authentication failed"));
+                resolve(false);
             }
         })
     })
@@ -152,5 +150,5 @@ export {
     createDefaultPassword,
     verifyJwtToken,
     createAuthToken,
-    authenticateSocketConnection
+    isAuthenticated
 };

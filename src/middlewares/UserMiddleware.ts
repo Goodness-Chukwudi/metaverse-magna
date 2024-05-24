@@ -5,6 +5,7 @@ import { logoutUser, userRepository } from "../services/user_service";
 import * as errorMessage from "../common/constant/error_response_message";
 import { PASSWORD_STATUS } from "../data/enums/enum";
 import { hashData, validateHashedData } from "../common/utils/auth_utils";
+import { passwordRepository } from "../services/password_service";
 
 class UserMiddleware extends BaseRouterMiddleware {
 
@@ -23,23 +24,13 @@ class UserMiddleware extends BaseRouterMiddleware {
                 const error = new Error("email is required");
                 return this.sendErrorResponse(res, error, errorMessage.requiredField("Email"), 400);
             }
-    
-            // const password = await passwordRepository
-            //     .findOneBy({
-            //         email: email,
-            //         status: PASSWORD_STATUS.ACTIVE
-            //     })
-    
-            // if (!password) {
-            //     return this.sendErrorResponse(res, new Error("User not found"), errorMessage.INVALID_LOGIN, 400)
-            // }
-    
+
             const user = await userRepository
-                .findOneBy({
-                    email: email,
-                    status: PASSWORD_STATUS.ACTIVE
-                })
-    
+                .createQueryBuilder("user")
+                .where("user.email = :email AND user.status = :status", {email: email, status: PASSWORD_STATUS.ACTIVE})
+                .leftJoinAndSelect("user.password", "password")
+                .getOne();
+
             if (!user) {
                 return this.sendErrorResponse(res, new Error("User not found"), errorMessage.INVALID_LOGIN, 400)
             }
@@ -84,19 +75,18 @@ class UserMiddleware extends BaseRouterMiddleware {
     */
     public validatePassword = async (req: Request, res: Response, next: any) => {
         try {
-            const user = this.requestUtils.getRequestUser();
-            // if (!password) {
-            //     const user = this.requestUtils.getRequestUser();
-            //     const password = await passwordRepository
-            //         .findOneBy({
-            //             email: user.email,
-            //             status: PASSWORD_STATUS.ACTIVE
-            //         })
+            let userPassword = this.requestUtils.getDataFromState(USER_PASSWORD_LABEL);
+            if (!userPassword) {
+                const user = this.requestUtils.getRequestUser();
+                userPassword = await passwordRepository
+                    .findOneBy({
+                        email: user.email,
+                        status: PASSWORD_STATUS.ACTIVE
+                    })
                 
-            //     this.requestUtils.addDataToState(USER_PASSWORD_LABEL, password);
-            // }
-
-            const isCorrectPassword = await validateHashedData(req.body.password, user.password.password);
+                this.requestUtils.addDataToState(USER_PASSWORD_LABEL, userPassword);
+            }
+            const isCorrectPassword = await validateHashedData(req.body.password, userPassword.password);
             if (!isCorrectPassword) return this.sendErrorResponse(res, new Error("Wrong password"), errorMessage.INVALID_LOGIN, 400);
 
             next();

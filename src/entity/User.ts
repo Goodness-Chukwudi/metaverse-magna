@@ -20,7 +20,7 @@ class User {
     @Column({type: "varchar", unique: true})
     email: string;
 
-    @OneToOne(() => SocketConnection, (socketConnection) => socketConnection.user, {cascade: true})
+    @OneToOne(() => SocketConnection, (socketConnection) => socketConnection.user)
     @JoinColumn()
     socket_connection: SocketConnection;
 
