@@ -3,14 +3,11 @@ import Env from '../common/config/environment_variables';
 import { Server } from "http";
 import { isAuthenticated } from '../common/utils/auth_utils';
 import { Socket } from 'socket.io';
-import { AppDataSource } from '../data-source';
-import SocketConnection from '../entity/SocketConnection';
 
 let io:Socket;
 let socket:Socket;
 const eventOptions = ["all_events", "sender", "receiver", "receiver_or_sender"]
 
-const socketRepository = AppDataSource.getRepository(SocketConnection)
 
 const createSocketConnection = async (server: Server) => {
     try {

@@ -1,6 +1,5 @@
 import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { ITEM_STATUS } from "../data/enums/enum";
-import SocketConnection from "./SocketConnection";
 import UserPassword from "./UserPassword";
 
 @Entity()
@@ -19,10 +18,6 @@ class User {
 
     @Column({type: "varchar", unique: true})
     email: string;
-
-    @OneToOne(() => SocketConnection, (socketConnection) => socketConnection.user)
-    @JoinColumn()
-    socket_connection: SocketConnection;
 
     @OneToOne(() => UserPassword, (userPassword) => userPassword.user, {cascade: true})
     @JoinColumn()
