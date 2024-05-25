@@ -2,16 +2,20 @@ import app from "./App";
 import Env from './common/config/environment_variables';
 import { ENVIRONMENTS} from './common/config/app_config';
 import validateEnvironmentVariables from './common/utils/env_validator';
-import { socketService } from "./services/socket_service";
+import { createSocketConnection, fetchBlock } from "./services/transaction_service";
+import cron from "node-cron";
 
 validateEnvironmentVariables();
 
-  const server = app.listen(Env.PORT, async () => {
-    if (Env.ENVIRONMENT == ENVIRONMENTS.DEV)
-        console.log(`Express is listening on http://localhost:${Env.PORT}${Env.API_PATH}`);
-      await socketService.createSocketConnection(server);
-  });
+const server = app.listen(Env.PORT, async () => {
+  if (Env.ENVIRONMENT == ENVIRONMENTS.DEV)
+      console.log(`Express is listening on http://localhost:${Env.PORT}${Env.API_PATH}`);
+    await createSocketConnection(server);
 
+    cron.schedule('0 0 1 * *', async () => {
+      await fetchBlock()
+    });
+});
 
 process.on('unhandledRejection', (reason: string, p: Promise<any>) => {
   console.error('Unhandled Rejection at:\n', p);

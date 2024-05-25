@@ -27,15 +27,8 @@ interface IUser {
     last_name: string;
     middle_name?: string;
     email: string;
-    socket_connection?: ISocketConnection;
     password?: IUserPassword;
     status?: string;
-}
-
-interface ISocketConnection {
-    id: number;
-    user: IUser;
-    socket_ids: string[];
 }
 
 interface ILoginSession {
@@ -55,12 +48,22 @@ interface IUserPassword {
     status: string
 }
 
+interface ITransaction {
+    sender_address: string;
+    receiver_address: string;
+    block_number: string;
+    block_hash: string;
+    transaction_hash: string;
+    gas_price_in_wei: number
+    value_in_wei: number
+}
+
 export {
     IResponseMessage,
     JoiExtensionFactory,
     AuthTokenPayload,
     IUser,
-    ISocketConnection,
     ILoginSession,
-    IUserPassword
+    IUserPassword,
+    ITransaction
 }

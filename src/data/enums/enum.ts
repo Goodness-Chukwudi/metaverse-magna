@@ -18,8 +18,16 @@ const ITEM_STATUS = Object.freeze({
     APPROVED: 'approved',
 });
 
+const EVENT_OPTIONS = Object.freeze({
+    ALL_EVENTS: 'all_events',
+    SENDER: 'sender',
+    RECEIVER: 'receiver',
+    SENDER_OR_RECEIVER: 'receiver_or_sender',
+});
+
 export {
     BIT,
     PASSWORD_STATUS,
-    ITEM_STATUS
+    ITEM_STATUS,
+    EVENT_OPTIONS
 }
