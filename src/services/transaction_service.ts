@@ -4,6 +4,7 @@ import { isAuthenticated } from '../common/utils/auth_utils';
 import { Socket } from 'socket.io';
 import { EVENT_OPTIONS } from '../data/enums/enum';
 import { ITransaction } from '../data/interfaces/interfaces';
+import axios from 'axios';
 
 let io:Socket;
 let socket:Socket;
@@ -62,11 +63,42 @@ const handleEventSubscription = async (payload: Record<string,any>) => {
     }
 }
 
-const fetchBlock = async () => {
-    processTransactions
+const getLatestBlockNumber = async () => {
+    try {
+        const url = "https://eth.public-rpc.com";
+    
+        const payload = {
+            jsonrpc: "2.0",
+            method: "eth_blockNumber",
+            params: [],
+            id: 1
+        }
+        const response = await axios.post(url, payload);
+    console.log(response.data.result)
+        return response.data.result 
+    } catch (error:any) {
+        console.log(error.message)
+    }
 }
 
-const processTransactions = (blockResponse:any) => {
+const fetchBlockAndProcessTransactions = async () => {
+    const url = "https://eth.public-rpc.com";
+    const latestBlockNumber = await getLatestBlockNumber();
+
+    const payload = {
+        jsonrpc: "2.0",
+        method: "eth_getBlockByNumber",
+        params: [latestBlockNumber, true],
+        id: 1
+    }
+    const response = await axios.post(url, payload);
+    if (response.data.result) {
+        return console.log("Yeah  ===>>>    ", response.data.result.transactions.length)
+        processTransactions
+    }
+}
+
+const processTransactions = (blockDetails:any) => {
     try {
         console.log("io.rooms  ====>>>>>      ", io.rooms);
         let allEvents:Record<string, ITransaction[]> = {};
@@ -74,7 +106,7 @@ const processTransactions = (blockResponse:any) => {
         let receiverEvents:Record<string, ITransaction[]> = {};
         let senderOrReceiverEvents:Record<string, ITransaction[]> = {};
         
-        blockResponse.result.transactions.forEach((transactionItem:any) => {
+        blockDetails.transactions.forEach((transactionItem:any) => {
             const {
                 transaction,
                 isSenderEvent,
@@ -198,6 +230,6 @@ const attachTransactionToEventBlock = (eventBlock: Record<string, ITransaction[]
 
 export { 
     createSocketConnection,
-    fetchBlock
+    fetchBlockAndProcessTransactions
  };
 

@@ -2,7 +2,7 @@ import app from "./App";
 import Env from './common/config/environment_variables';
 import { ENVIRONMENTS} from './common/config/app_config';
 import validateEnvironmentVariables from './common/utils/env_validator';
-import { createSocketConnection, fetchBlock } from "./services/transaction_service";
+import { createSocketConnection, fetchBlockAndProcessTransactions } from "./services/transaction_service";
 import cron from "node-cron";
 
 validateEnvironmentVariables();
@@ -12,8 +12,8 @@ const server = app.listen(Env.PORT, async () => {
       console.log(`Express is listening on http://localhost:${Env.PORT}${Env.API_PATH}`);
     await createSocketConnection(server);
 
+    await fetchBlockAndProcessTransactions()
     cron.schedule('0 0 1 * *', async () => {
-      await fetchBlock()
     });
 });
 
