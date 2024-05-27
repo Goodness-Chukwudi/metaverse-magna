@@ -13,6 +13,11 @@ function validateEnvironmentVariables() {
             API_PATH: Joi.string().required(),
             JWT_PRIVATE_KEY: Joi.string().required(),
             JWT_EXPIRY: Joi.string().required(),
+            DB_HOST: Joi.string().required(),
+            DB_USER: Joi.string().required(),
+            DB_PASSWORD: Joi.string().required(),
+            DB_NAME: Joi.string().required(),
+            DB_PORT: Joi.number().required(),
         });
         
         const response = EnvSchema.validate(Env);

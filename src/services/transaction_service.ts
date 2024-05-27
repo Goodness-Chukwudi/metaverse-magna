@@ -19,21 +19,22 @@ const createSocketConnection = async (server: Server) => {
             }
         });
     
+        //Auth middleware
         io.use(async (socket:any, next:any) => {
-            const token = socket.handshake.auth.token;
-            if (await isAuthenticated(token)) {
-                next();
-            } else {
-              next(new Error("Authentication failed"));
+            try {
+                const token = socket.handshake?.auth?.token || socket.handshake?.headers["x-access-token"];
+                if (await isAuthenticated(token)) return next();
+                next(new Error("Authentication failed"));
+            } catch (error) {
+                next(new Error("Server error during authentication"));
             }
         });
 
         io.on("connection", (_socket) => {
             socket = _socket;
-
-            io.on("subscribe-to-events", handleEventSubscription);
-
+            socket.on("subscribe-to-events", handleEventSubscription);
         });
+
     } catch (error) {
         throw error;
     }
@@ -41,25 +42,16 @@ const createSocketConnection = async (server: Server) => {
 
 const handleEventSubscription = async (payload: Record<string,any>) => {
     try {
-        console.log("io.rooms  ====>>>>>      ", io.rooms)
         const eventOptions = Object.values(EVENT_OPTIONS);
 
-        if (!await isAuthenticated(payload.token)) {
-            io.to(socket.id).emit("socket-error", "Authentication failed");
-        }
-
         if (!eventOptions.includes(payload.event)) {
-            io.to(socket.id).emit("socket-error", "Events must be any of " + eventOptions.join(", "));
-        }
-        
-        if (!io.rooms.has(payload.event)) {
-            io.rooms.add(payload.event)
+            return io.to(socket.id).emit("socket-error", "Events must be any of " + eventOptions.join(", "));
         }
 
-        io.join(payload.event);
+        socket.join(payload.event);
     } catch (error) {
         console.log(error);
-        socket.to(socket.id).emit("socket-error", "Server error");
+        io.to(socket.id).emit("socket-error", "Server error");
     }
 }
 
@@ -74,7 +66,7 @@ const getLatestBlockNumber = async () => {
             id: 1
         }
         const response = await axios.post(url, payload);
-    console.log(response.data.result)
+
         return response.data.result 
     } catch (error:any) {
         console.log(error.message)
@@ -82,25 +74,30 @@ const getLatestBlockNumber = async () => {
 }
 
 const fetchBlockAndProcessTransactions = async () => {
-    const url = "https://eth.public-rpc.com";
-    const latestBlockNumber = await getLatestBlockNumber();
+    try {
+        //Do not process transaction if theres no active socket connection to send it to
+        if(!socket) return;
 
-    const payload = {
-        jsonrpc: "2.0",
-        method: "eth_getBlockByNumber",
-        params: [latestBlockNumber, true],
-        id: 1
-    }
-    const response = await axios.post(url, payload);
-    if (response.data.result) {
-        return console.log("Yeah  ===>>>    ", response.data.result.transactions.length)
-        processTransactions
+        const url = "https://eth.public-rpc.com";
+        const latestBlockNumber = await getLatestBlockNumber();
+    
+        const payload = {
+            jsonrpc: "2.0",
+            method: "eth_getBlockByNumber",
+            params: [latestBlockNumber, true],
+            id: 1
+        }
+        const response = await axios.post(url, payload);
+        if (response.data.result) {
+            processTransactions(response.data.result)
+        }
+    } catch (error:any) {
+       console.log(error.message) 
     }
 }
 
 const processTransactions = (blockDetails:any) => {
     try {
-        console.log("io.rooms  ====>>>>>      ", io.rooms);
         let allEvents:Record<string, ITransaction[]> = {};
         let senderEvents:Record<string, ITransaction[]> = {};
         let receiverEvents:Record<string, ITransaction[]> = {};
@@ -115,25 +112,24 @@ const processTransactions = (blockDetails:any) => {
             } = analyzeTransaction(transactionItem);
     
             //Only attach a transaction for an event type if a room has been created for that event type
-            if (io.rooms?.has(EVENT_OPTIONS.ALL_EVENTS)) {
+            if (socket.rooms.has(EVENT_OPTIONS.ALL_EVENTS)) {
                 allEvents = attachTransactionToEventBlock(allEvents, transaction);
-    
             }
             
-            if (io.rooms?.has(EVENT_OPTIONS.SENDER) && isSenderEvent) {
+            if (socket.rooms.has(EVENT_OPTIONS.SENDER) && isSenderEvent) {
                 senderEvents = attachTransactionToEventBlock(senderEvents, transaction);
             }
     
-            if (io.rooms?.has(EVENT_OPTIONS.RECEIVER) && isReceiverEvent) {
+            if (socket.rooms.has(EVENT_OPTIONS.RECEIVER) && isReceiverEvent) {
                 receiverEvents = attachTransactionToEventBlock(receiverEvents, transaction);
             }
     
-            if (io.rooms?.has(EVENT_OPTIONS.SENDER_OR_RECEIVER) && isSenderOrReceiverEvent) {
+            if (socket.rooms.has(EVENT_OPTIONS.SENDER_OR_RECEIVER) && isSenderOrReceiverEvent) {
                 senderOrReceiverEvents = attachTransactionToEventBlock(senderOrReceiverEvents, transaction);
             }
         });
 
-        //Emit events after processing transaction info
+        // //Emit events after processing transaction info
         if (Object.keys(allEvents).length > 0) {
             io.to(EVENT_OPTIONS.ALL_EVENTS).emit(EVENT_OPTIONS.ALL_EVENTS, allEvents)
         }

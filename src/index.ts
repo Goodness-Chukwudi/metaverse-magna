@@ -8,12 +8,13 @@ import cron from "node-cron";
 validateEnvironmentVariables();
 
 const server = app.listen(Env.PORT, async () => {
-  if (Env.ENVIRONMENT == ENVIRONMENTS.DEV)
-      console.log(`Express is listening on http://localhost:${Env.PORT}${Env.API_PATH}`);
+  if (Env.ENVIRONMENT == ENVIRONMENTS.DEV) {
+    console.log(`Express is listening on http://localhost:${Env.PORT}${Env.API_PATH}`);
+  }
     await createSocketConnection(server);
 
-    await fetchBlockAndProcessTransactions()
-    cron.schedule('0 0 1 * *', async () => {
+    cron.schedule('*/2 * * * * *', async () => {
+      await fetchBlockAndProcessTransactions()
     });
 });
 
