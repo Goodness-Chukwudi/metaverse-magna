@@ -17,7 +17,6 @@ class RequestUtils {
         })
     }
 
-
     /**
      * Sets the provided data with the provided key to the response.locals object of express instance.
      * @param {string} key The key to be used to save the provided data 

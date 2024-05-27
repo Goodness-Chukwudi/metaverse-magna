@@ -1,7 +1,5 @@
 import { Request } from "express";
-import { ENVIRONMENTS } from "../config/app_config";
 import Env from "../config/environment_variables";
-import { getCode } from "./app_utils";
 import bcrypt from 'bcryptjs';
 import Jwt from "jsonwebtoken";
 import { AuthTokenPayload } from "../../data/interfaces/interfaces";
@@ -37,19 +35,6 @@ const verifyJwtToken = (token: string, callback:(err: any, decoded: any) => void
     Jwt.verify(token, Env.JWT_PRIVATE_KEY, (err, decoded) => {
         callback(err, decoded);
     });
-}
-    
-/**
- * Generates a default password
- * @returns {string} a string
-*/
-const createDefaultPassword = (): string => {
-    try {
-        return (Env.ENVIRONMENT === ENVIRONMENTS.DEV)? "password" : getCode(8);
-        
-    } catch (error) {
-        throw error;
-    }
 }
 
 /**
@@ -147,7 +132,6 @@ export {
     getTokenFromRequest,
     validateHashedData,
     hashData,
-    createDefaultPassword,
     verifyJwtToken,
     createAuthToken,
     isAuthenticated

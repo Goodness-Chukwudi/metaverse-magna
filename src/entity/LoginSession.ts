@@ -19,7 +19,7 @@ class LoginSession {
     is_expired: boolean;
 
     @Column({type: "enum", enum: Object.values(BIT), default: BIT.OFF})
-    status: number
+    status: number;
 }
 
 export default LoginSession;
